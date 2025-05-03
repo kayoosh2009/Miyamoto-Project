@@ -1,80 +1,74 @@
-<!-- login.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Вход — Miyamoto Project</title>
+  <meta charset="UTF-8">
+  <title>Вход — Miyamoto Mining</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 </head>
-<body class="bg-black text-white flex flex-col justify-center items-center min-h-screen px-4">
+<body class="bg-gradient-to-b from-black to-gray-900 text-white min-h-screen flex items-center justify-center p-4">
 
-  <div class="bg-gray-900 p-8 rounded-xl shadow-xl max-w-md w-full">
-    <h1 class="text-3xl font-bold mb-6 text-center">🔐 Вход в облачный майнинг</h1>
+  <div class="bg-gray-800 rounded-2xl p-8 max-w-md w-full shadow-lg">
+    <h1 class="text-3xl font-bold text-center mb-6">Вход в майнинг</h1>
+    <p class="text-sm text-gray-400 text-center mb-6">
+      Введите адрес вашего Solana кошелька, чтобы начать.
+    </p>
 
-    <label for="wallet" class="block text-sm text-gray-400 mb-2">Solana-адрес кошелька:</label>
-    <input
-      type="text"
-      id="wallet"
-      placeholder="Введите ваш Solana-адрес"
-      class="w-full px-4 py-2 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-purple-600 mb-4"
-    />
+    <input id="wallet" type="text" placeholder="Ваш Solana адрес" 
+           class="w-full p-3 rounded-md bg-gray-700 text-white focus:outline-none mb-4" />
 
-    <button
-      onclick="loginUser()"
-      class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg transition-all"
-    >
-      🚀 Войти
+    <button onclick="login()" class="w-full bg-purple-600 hover:bg-purple-700 transition-all text-white font-bold py-3 rounded-md">
+      Войти
     </button>
   </div>
 
-  <footer class="mt-8 text-sm text-gray-500">
-    Miyamoto Project © 2025
-  </footer>
-
   <script>
-    // Конфиг Firebase
+    // Firebase конфиг
     const firebaseConfig = {
       apiKey: "AIzaSyBWWqOaYvDtjtMynOwZ3hRy5vt2nmzMgFM",
       authDomain: "miyamoto-project.firebaseapp.com",
       projectId: "miyamoto-project",
-      storageBucket: "miyamoto-project.firebasestorage.app",
+      storageBucket: "miyamoto-project.appspot.com",
       messagingSenderId: "266668256982",
       appId: "1:266668256982:web:64957d8c366d80b1196377",
-      measurementId: "G-VSQJLR6GR9"
+      measurementId: "G-VSQJLR6GR9",
+      databaseURL: "https://miyamoto-project-default-rtdb.firebaseio.com"
     };
 
-    // Инициализация
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    const database = firebase.database();
 
-    // Вход пользователя
-    function loginUser() {
-      const wallet = document.getElementById('wallet').value.trim();
+    function login() {
+      const wallet = document.getElementById("wallet").value.trim();
 
-      if (!wallet || wallet.length < 20) {
-        alert("Введите корректный Solana-адрес.");
+      if (!wallet) {
+        alert("Пожалуйста, введите адрес кошелька.");
         return;
       }
 
-      const userRef = db.ref("users/" + wallet);
+      const userRef = database.ref("users/" + wallet);
 
-      // Сохраняем адрес
-      userRef.set({
-        wallet: wallet,
-        createdAt: Date.now(),
-        totalMiningTime: 0,
-        balance: 0
-      }).then(() => {
-        localStorage.setItem("wallet", wallet); // для последующего использования
+      userRef.once("value").then(snapshot => {
+        if (!snapshot.exists()) {
+          // создаем нового пользователя
+          userRef.set({
+            wallet: wallet,
+            balance: 0,
+            totalMinedTime: 0
+          });
+        }
+
+        localStorage.setItem("wallet", wallet);
         window.location.href = "dashboard.html";
-      }).catch((err) => {
-        alert("Ошибка при входе: " + err.message);
+      }).catch(error => {
+        console.error("Ошибка при логине:", error);
+        alert("Произошла ошибка. Попробуйте позже.");
       });
     }
   </script>
+
 </body>
 </html>
