@@ -1,0 +1,83 @@
+<!-- mining.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Майнинг — Miyamoto</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-black text-white flex flex-col items-center min-h-screen p-6">
+
+  <div class="max-w-2xl w-full bg-gray-900 p-6 rounded-xl shadow-xl mt-10 text-center">
+    <h1 class="text-3xl font-bold mb-6">⛏️ Облачный майнинг $MIYAMOTO</h1>
+
+    <div class="mb-4">
+      <label class="block mb-2">Выберите майнер:</label>
+      <select id="miner" class="w-full p-2 text-black rounded">
+        <option value="1">MinerCat 1000 (Бесплатный, 1 токен/мин)</option>
+        <option value="2">TigerBit (2 токена/мин)</option>
+        <option value="3">SakuraCore (3 токена/мин)</option>
+        <option value="4">NekoMiner (4 токена/мин)</option>
+        <option value="5">DragonX (5 токенов/мин)</option>
+      </select>
+    </div>
+
+    <div class="mb-4">
+      <label class="block mb-2">Выберите локацию:</label>
+      <select id="location" class="w-full p-2 text-black rounded">
+        <option value="tokyo">Токио</option>
+        <option value="nagoya">Нагоя</option>
+        <option value="kyoto">Киото</option>
+        <option value="osaka">Осака</option>
+      </select>
+    </div>
+
+    <button onclick="startMining()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded font-semibold mt-4">
+      ▶️ Начать майнинг
+    </button>
+
+    <div id="status" class="mt-6 text-lg text-green-400"></div>
+  </div>
+
+  <script>
+    const wallet = localStorage.getItem("wallet");
+    if (!wallet) {
+      alert("Пожалуйста, войдите снова.");
+      window.location.href = "login.html";
+    }
+
+    const minerSpeeds = {
+      1: 1,
+      2: 2,
+      3: 3,
+      4: 4,
+      5: 5
+    };
+
+    function startMining() {
+      const miner = document.getElementById("miner").value;
+      const location = document.getElementById("location").value;
+      const speed = minerSpeeds[miner];
+
+      const now = new Date();
+      const currentDate = now.toDateString();
+      const timeKey = `mining_${location}_${currentDate}`;
+      const usedTime = parseInt(localStorage.getItem(timeKey) || "0");
+
+      if (usedTime >= 30) {
+        document.getElementById("status").textContent = "⚠️ Сегодня лимит на эту локацию исчерпан (30 мин)";
+        return;
+      }
+
+      // Сохраняем данные для следующей страницы
+      localStorage.setItem("currentMiner", miner);
+      localStorage.setItem("currentSpeed", speed);
+      localStorage.setItem("currentLocation", location);
+
+      // Переход на симуляцию процесса
+      window.location.href = "mining-process.html";
+    }
+  </script>
+</body>
+</html>

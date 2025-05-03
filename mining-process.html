@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Майнинг в процессе — Miyamoto</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+</head>
+<body class="bg-black text-white flex flex-col items-center justify-center min-h-screen p-6">
+  <div class="text-center">
+    <h1 class="text-3xl font-bold mb-4">🔄 Симуляция блока...</h1>
+
+    <!-- Крутящийся "кубик" -->
+    <div class="animate-spin-slow border-8 border-purple-500 border-t-transparent rounded-full w-20 h-20 mx-auto mb-6"></div>
+
+    <p class="text-lg mb-2">⏳ Следующее обновление через <span id="countdown">15</span> сек.</p>
+    <p class="text-green-400 text-xl mb-4">💸 Потенциальная награда: <span id="reward">?</span> $MIYAMOTO</p>
+
+    <button onclick="stopMining()" class="mt-4 px-6 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-semibold">
+      🛑 Стоп майнинг
+    </button>
+  </div>
+
+  <script>
+    // Firebase init
+    const firebaseConfig = {
+      apiKey: "AIzaSyBWWqOaYvDtjtMynOwZ3hRy5vt2nmzMgFM",
+      authDomain: "miyamoto-project.firebaseapp.com",
+      projectId: "miyamoto-project",
+      storageBucket: "miyamoto-project.appspot.com",
+      messagingSenderId: "266668256982",
+      appId: "1:266668256982:web:64957d8c366d80b1196377",
+      measurementId: "G-VSQJLR6GR9",
+      databaseURL: "https://miyamoto-project-default-rtdb.firebaseio.com"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    const countdownEl = document.getElementById("countdown");
+    const rewardEl = document.getElementById("reward");
+    let countdown = 15;
+
+    // Генерация случайной награды
+    const reward = Math.floor(Math.random() * 5) + 1;
+    rewardEl.textContent = reward;
+
+    const wallet = localStorage.getItem("wallet");
+
+    const interval = setInterval(() => {
+      countdown--;
+      countdownEl.textContent = countdown;
+
+      if (countdown <= 0) {
+        clearInterval(interval);
+        saveRewardAndReload();
+      }
+    }, 1000);
+
+    function stopMining() {
+      clearInterval(interval);
+      window.location.href = "dashboard.html";
+    }
+
+    function saveRewardAndReload() {
+      if (!wallet) {
+        alert("Wallet не найден");
+        return;
+      }
+
+      const userRef = database.ref("users/" + wallet);
+
+      userRef.once("value").then(snapshot => {
+        const currentBalance = snapshot.val()?.balance || 0;
+        const updatedBalance = currentBalance + reward;
+
+        userRef.update({ balance: updatedBalance }).then(() => {
+          location.reload();
+        });
+      }).catch(error => {
+        console.error("Ошибка при обновлении баланса:", error);
+        location.reload(); // всё равно перезагружаем
+      });
+    }
+  </script>
+
+  <style>
+    .animate-spin-slow {
+      animation: spin 2s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</body>
+</html>
