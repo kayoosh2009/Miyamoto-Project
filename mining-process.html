@@ -10,34 +10,39 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 </head>
-<body class="bg-gray-950 text-white flex flex-col items-center justify-center min-h-screen p-4 space-y-8">
+<body class="bg-gray-950 text-white min-h-screen flex items-center justify-center relative px-4">
 
-  <div class="text-center">
+  <!-- Левый баннер -->
+  <div class="absolute left-0 top-1/2 transform -translate-y-1/2 hidden md:block">
+    <iframe data-aa='2392839' src='//ad.a-ads.com/2392839?size=300x600' style='width:300px; height:600px; border:0px; padding:0; overflow:hidden; background-color: transparent;'></iframe>
+  </div>
+
+  <!-- Основной контент -->
+  <div class="text-center w-full max-w-lg">
+
     <h1 class="text-4xl font-bold mb-2">⛏️ Майнинг Miyamoto</h1>
     <p class="text-gray-400">Заработок токенов через облачный псевдо-майнинг</p>
+
+    <!-- Анимационный "кубик" -->
+    <div id="cube" class="w-32 h-32 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl animate-pulse shadow-2xl my-6"></div>
+
+    <!-- Таймер и ожидаемая награда -->
+    <div class="text-xl">
+      Следующая награда через: <span id="timer" class="font-mono text-green-400">15</span> сек
+    </div>
+    <div class="text-lg">
+      Ожидаемое вознаграждение: <span class="font-semibold text-yellow-400">+1 $MIYAMOTO</span>
+    </div>
+
+    <!-- Кнопка стоп -->
+    <button onclick="stopMining()" class="mt-4 px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg text-white font-semibold transition">
+      ⛔ Стоп
+    </button>
   </div>
 
-  <!-- Анимационный "кубик" -->
-  <div id="cube" class="w-32 h-32 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl animate-pulse shadow-2xl"></div>
-
-  <!-- Таймер и ожидаемая награда -->
-  <div class="text-xl">
-    Следующая награда через: <span id="timer" class="font-mono text-green-400">15</span> сек
-  </div>
-  <div class="text-lg">
-    Ожидаемое вознаграждение: <span class="font-semibold text-yellow-400">+1 $MIYAMOTO</span>
-  </div>
-
-  <!-- Кнопка стоп -->
-  <button onclick="stopMining()" class="mt-4 px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg text-white font-semibold transition">
-    ⛔ Стоп
-  </button>
-
-  <!-- Рекламный баннер -->
-  <div class="mt-10">
-    <iframe data-aa='2392914' src='//ad.a-ads.com/2392914?size=970x250'
-            style='width:970px; height:250px; border:0; padding:0; overflow:hidden; background-color: transparent;'>
-    </iframe>
+  <!-- Правый баннер -->
+  <div class="absolute right-0 top-1/2 transform -translate-y-1/2 hidden md:block">
+    <iframe data-aa='2392839' src='//ad.a-ads.com/2392839?size=300x600' style='width:300px; height:600px; border:0px; padding:0; overflow:hidden; background-color: transparent;'></iframe>
   </div>
 
   <!-- Скрипт логики -->
