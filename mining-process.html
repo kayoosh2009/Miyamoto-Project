@@ -2,102 +2,71 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Майнинг — Miyamoto Project</title>
+  <title>Майнинг — Miyamoto Token</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+    import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
-</head>
-<body class="bg-gray-950 text-white min-h-screen flex items-center justify-center relative px-4">
-
-  <!-- Левый баннер -->
-  <div class="absolute left-0 top-1/2 transform -translate-y-1/2 hidden md:block">
-    <iframe data-aa='2392839' src='//ad.a-ads.com/2392839?size=300x600' style='width:300px; height:600px; border:0px; padding:0; overflow:hidden; background-color: transparent;'></iframe>
-  </div>
-
-  <!-- Основной контент -->
-  <div class="text-center w-full max-w-lg">
-
-    <h1 class="text-4xl font-bold mb-2">⛏️ Майнинг Miyamoto</h1>
-    <p class="text-gray-400">Заработок токенов через облачный псевдо-майнинг</p>
-
-    <!-- Анимационный "кубик" -->
-    <div id="cube" class="w-32 h-32 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl animate-pulse shadow-2xl my-6"></div>
-
-    <!-- Таймер и ожидаемая награда -->
-    <div class="text-xl">
-      Следующая награда через: <span id="timer" class="font-mono text-green-400">15</span> сек
-    </div>
-    <div class="text-lg">
-      Ожидаемое вознаграждение: <span class="font-semibold text-yellow-400">+1 $MIYAMOTO</span>
-    </div>
-
-    <!-- Кнопка стоп -->
-    <button onclick="stopMining()" class="mt-4 px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg text-white font-semibold transition">
-      ⛔ Стоп
-    </button>
-  </div>
-
-  <!-- Правый баннер -->
-  <div class="absolute right-0 top-1/2 transform -translate-y-1/2 hidden md:block">
-    <iframe data-aa='2392839' src='//ad.a-ads.com/2392839?size=300x600' style='width:300px; height:600px; border:0px; padding:0; overflow:hidden; background-color: transparent;'></iframe>
-  </div>
-
-  <!-- Скрипт логики -->
-  <script>
-    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyBWWqOaYvDtjtMynOwZ3hRy5vt2nmzMgFM",
       authDomain: "miyamoto-project.firebaseapp.com",
       projectId: "miyamoto-project",
-      storageBucket: "miyamoto-project.appspot.com",
+      storageBucket: "miyamoto-project.firebaseapp.com",
       messagingSenderId: "266668256982",
       appId: "1:266668256982:web:64957d8c366d80b1196377",
       measurementId: "G-VSQJLR6GR9",
       databaseURL: "https://miyamoto-project-default-rtdb.firebaseio.com"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+    const userAddress = localStorage.getItem("solanaWallet");
 
-    const wallet = localStorage.getItem("wallet");
-    if (!wallet) {
-      window.location.href = "login.html";
-    }
+    function updateBalance() {
+      if (!userAddress) return;
 
-    let timeLeft = 15;
-    const timerDisplay = document.getElementById("timer");
-
-    const countdown = setInterval(() => {
-      timeLeft--;
-      timerDisplay.textContent = timeLeft;
-
-      if (timeLeft <= 0) {
-        clearInterval(countdown);
-        rewardUser();
-      }
-    }, 1000);
-
-    function rewardUser() {
-      const userRef = database.ref("users/" + wallet);
-
-      userRef.once("value").then(snapshot => {
-        if (snapshot.exists()) {
-          const current = snapshot.val();
-          const newBalance = (current.balance || 0) + 1;
-          userRef.update({ balance: newBalance });
-        }
-        // Перезагрузить страницу для следующего майнинга
-        location.reload();
+      const userRef = ref(database, "users/" + userAddress);
+      onValue(userRef, (snapshot) => {
+        const userData = snapshot.val();
+        let current = userData?.balance || 0;
+        current += 0.25;
+        update(userRef, { balance: current });
+      }, {
+        onlyOnce: true
       });
     }
+
+    function refreshPage() {
+      updateBalance();
+      setTimeout(() => location.reload(), 15000);
+    }
+
+    window.onload = refreshPage;
 
     function stopMining() {
       window.location.href = "dashboard.html";
     }
   </script>
+</head>
+<body class="bg-gray-900 text-white font-sans flex flex-col justify-between min-h-screen">
+
+  <main class="flex flex-col items-center justify-center flex-grow p-6 text-center">
+    <h1 class="text-4xl font-bold text-purple-500 mb-4">⛏️ Майнинг в процессе...</h1>
+    <p class="text-lg text-gray-300 mb-4">Следующее начисление токенов через 15 секунд</p>
+    <div class="w-20 h-20 border-8 border-purple-600 border-dashed rounded-full animate-spin mb-6"></div>
+    <p class="text-xl font-semibold text-green-400 mb-6">+0.25 $MIYAMOTO</p>
+    <button onclick="stopMining()" class="px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-full text-white font-semibold transition">
+      🛑 Стоп
+    </button>
+  </main>
+
+  <!-- Один рекламный баннер внизу -->
+  <footer class="flex justify-center py-6">
+    <iframe data-aa='2392950' src='//ad.a-ads.com/2392950?size=728x90'
+      style='width:728px; height:90px; border:0px; padding:0; overflow:hidden; background-color: transparent;'></iframe>
+  </footer>
 
 </body>
 </html>
