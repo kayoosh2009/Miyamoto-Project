@@ -7,13 +7,13 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-    import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+    import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBWWqOaYvDtjtMynOwZ3hRy5vt2nmzMgFM",
       authDomain: "miyamoto-project.firebaseapp.com",
       projectId: "miyamoto-project",
-      storageBucket: "miyamoto-project.firebaseapp.com",
+      storageBucket: "miyamoto-project.appspot.com",
       messagingSenderId: "266668256982",
       appId: "1:266668256982:web:64957d8c366d80b1196377",
       measurementId: "G-VSQJLR6GR9",
@@ -24,45 +24,60 @@
     const database = getDatabase(app);
     const userAddress = localStorage.getItem("solanaWallet");
 
-    function updateBalance() {
+    let countdown = 15;
+
+    function updateCountdown() {
+      const timerElement = document.getElementById("timer");
+      timerElement.textContent = countdown;
+      countdown--;
+
+      if (countdown < 0) {
+        updateBalanceAndReload();
+      } else {
+        setTimeout(updateCountdown, 1000);
+      }
+    }
+
+    function updateBalanceAndReload() {
       if (!userAddress) return;
 
       const userRef = ref(database, "users/" + userAddress);
-      onValue(userRef, (snapshot) => {
+      get(userRef).then((snapshot) => {
         const userData = snapshot.val();
-        let current = userData?.balance || 0;
-        current += 0.25;
-        update(userRef, { balance: current });
-      }, {
-        onlyOnce: true
+        const currentBalance = userData?.balance || 0;
+        const newBalance = currentBalance + 0.25;
+        update(userRef, { balance: newBalance }).then(() => {
+          location.reload();
+        });
       });
     }
-
-    function refreshPage() {
-      updateBalance();
-      setTimeout(() => location.reload(), 15000);
-    }
-
-    window.onload = refreshPage;
 
     function stopMining() {
       window.location.href = "dashboard.html";
     }
+
+    window.onload = () => {
+      updateCountdown(); // запускаем таймер
+    };
   </script>
 </head>
 <body class="bg-gray-900 text-white font-sans flex flex-col justify-between min-h-screen">
 
   <main class="flex flex-col items-center justify-center flex-grow p-6 text-center">
     <h1 class="text-4xl font-bold text-purple-500 mb-4">⛏️ Майнинг в процессе...</h1>
-    <p class="text-lg text-gray-300 mb-4">Следующее начисление токенов через 15 секунд</p>
+
+    <p class="text-lg text-gray-300 mb-2">Следующее начисление токенов через</p>
+    <p class="text-5xl font-bold text-green-400 mb-6"><span id="timer">15</span> сек</p>
+
     <div class="w-20 h-20 border-8 border-purple-600 border-dashed rounded-full animate-spin mb-6"></div>
+
     <p class="text-xl font-semibold text-green-400 mb-6">+0.25 $MIYAMOTO</p>
+
     <button onclick="stopMining()" class="px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-full text-white font-semibold transition">
       🛑 Стоп
     </button>
   </main>
 
-  <!-- Один рекламный баннер внизу -->
   <footer class="flex justify-center py-6">
     <iframe data-aa='2392950' src='//ad.a-ads.com/2392950?size=728x90'
       style='width:728px; height:90px; border:0px; padding:0; overflow:hidden; background-color: transparent;'></iframe>
