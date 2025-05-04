@@ -1,37 +1,50 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Майнинг — Miyamoto Token</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Майнинг Miyamoto</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <style>
+    body {
+      background-color: #0d0d1a;
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+    }
+
+    #cube {
+      font-size: 50px;
+      margin: 20px 0;
+    }
+
+    #stopBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #6b5b95;
+      border: none;
+      color: white;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+  </style>
 </head>
-<body class="bg-gray-900 text-white font-sans flex flex-col justify-between min-h-screen">
+<body>
+  <h1>⛏️ Идёт облачный майнинг...</h1>
+  <div id="amount">💰 Получишь: 1 $MIYA</div>
+  <div id="timer">⏳ Перезагрузка через: 15 сек.</div>
+  <div id="cube">🟪</div>
+  <button id="stopBtn">Остановить</button>
 
-  <main class="flex flex-col items-center justify-center flex-grow p-6 text-center">
-    <h1 class="text-4xl font-bold text-purple-500 mb-4">⛏️ Майнинг в процессе...</h1>
-
-    <p class="text-lg text-gray-300 mb-2">Следующее начисление токенов через</p>
-    <p class="text-5xl font-bold text-green-400 mb-6"><span id="timer">15</span> сек</p>
-
-    <div class="w-20 h-20 border-8 border-purple-600 border-dashed rounded-full animate-spin mb-6"></div>
-
-    <p class="text-xl font-semibold text-green-400 mb-6">+0.25 $MIYAMOTO</p>
-
-    <button onclick="stopMining()" class="px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-full text-white font-semibold transition">
-      🛑 Стоп
-    </button>
-  </main>
-
-  <footer class="flex justify-center py-6">
-    <iframe data-aa='2392950' src='//ad.a-ads.com/2392950?size=728x90'
-      style='width:728px; height:90px; border:0px; padding:0; overflow:hidden; background-color: transparent;'></iframe>
-  </footer>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-    import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
-
+  <script>
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyBWWqOaYvDtjtMynOwZ3hRy5vt2nmzMgFM",
       authDomain: "miyamoto-project.firebaseapp.com",
@@ -39,43 +52,49 @@
       storageBucket: "miyamoto-project.appspot.com",
       messagingSenderId: "266668256982",
       appId: "1:266668256982:web:64957d8c366d80b1196377",
-      measurementId: "G-VSQJLR6GR9",
-      databaseURL: "https://miyamoto-project-default-rtdb.firebaseio.com"
+      databaseURL: "https://miyamoto-project-default-rtdb.firebaseio.com/"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
-    const userAddress = localStorage.getItem("solanaWallet");
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-    let countdown = 15;
-    const timerElement = document.getElementById("timer");
+    const wallet = localStorage.getItem("solanaWallet");
+    if (!wallet) {
+      alert("Кошелёк не найден. Авторизуйтесь заново.");
+      window.location.href = "login.html";
+    }
 
-    const interval = setInterval(() => {
-      countdown--;
-      timerElement.textContent = countdown;
-
-      if (countdown <= 0) {
-        clearInterval(interval);
-        if (!userAddress) return;
-
-        const userRef = ref(database, "users/" + userAddress);
-        get(userRef).then((snapshot) => {
-          const userData = snapshot.val();
-          const currentBalance = userData?.balance || 0;
-          const newBalance = currentBalance + 0.25;
-
-          update(userRef, { balance: newBalance }).then(() => {
-            location.reload();
-          });
+    // Добавить токен пользователю
+    function addTokenToUser() {
+      const userRef = db.ref("users/" + wallet);
+      userRef.once("value").then(snapshot => {
+        const data = snapshot.val();
+        const currentBalance = data?.balance || 0;
+        userRef.update({
+          balance: currentBalance + 1
         });
+      });
+    }
+
+    // Обновить таймер и перезагрузить
+    let seconds = 15;
+    const timerEl = document.getElementById("timer");
+    const interval = setInterval(() => {
+      seconds--;
+      timerEl.textContent = `⏳ Перезагрузка через: ${seconds} сек.`;
+      if (seconds === 0) {
+        clearInterval(interval);
+        addTokenToUser();
+        setTimeout(() => {
+          location.reload();
+        }, 1000); // Подождать, пока обновится баланс
       }
     }, 1000);
 
-    window.stopMining = function () {
-      clearInterval(interval);
+    // Стоп
+    document.getElementById("stopBtn").addEventListener("click", () => {
       window.location.href = "dashboard.html";
-    };
+    });
   </script>
-
 </body>
 </html>

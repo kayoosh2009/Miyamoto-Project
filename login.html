@@ -1,32 +1,56 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Вход — Miyamoto Mining</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+  <meta charset="UTF-8" />
+  <title>Вход в Miyamoto Cloud Miner</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d1a;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      flex-direction: column;
+      text-align: center;
+    }
+
+    input {
+      padding: 10px;
+      width: 300px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #6b5b95;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    h1 {
+      margin-bottom: 30px;
+    }
+  </style>
 </head>
-<body class="bg-gradient-to-b from-black to-gray-900 text-white min-h-screen flex items-center justify-center p-4">
-
-  <div class="bg-gray-800 rounded-2xl p-8 max-w-md w-full shadow-lg">
-    <h1 class="text-3xl font-bold text-center mb-6">Вход в майнинг</h1>
-    <p class="text-sm text-gray-400 text-center mb-6">
-      Введите адрес вашего Solana кошелька, чтобы начать.
-    </p>
-
-    <input id="wallet" type="text" placeholder="Ваш Solana адрес" 
-           class="w-full p-3 rounded-md bg-gray-700 text-white focus:outline-none mb-4" />
-
-    <button onclick="login()" class="w-full bg-purple-600 hover:bg-purple-700 transition-all text-white font-bold py-3 rounded-md">
-      Войти
-    </button>
-  </div>
+<body>
+  <h1>Вход в Miyamoto Miner</h1>
+  <input type="text" id="wallet" placeholder="Введи адрес Solana кошелька" />
+  <br />
+  <button onclick="login()">Войти</button>
 
   <script>
-    // Firebase конфиг
     const firebaseConfig = {
       apiKey: "AIzaSyBWWqOaYvDtjtMynOwZ3hRy5vt2nmzMgFM",
       authDomain: "miyamoto-project.firebaseapp.com",
@@ -34,41 +58,39 @@
       storageBucket: "miyamoto-project.appspot.com",
       messagingSenderId: "266668256982",
       appId: "1:266668256982:web:64957d8c366d80b1196377",
-      measurementId: "G-VSQJLR6GR9",
-      databaseURL: "https://miyamoto-project-default-rtdb.firebaseio.com"
+      databaseURL: "https://miyamoto-project-default-rtdb.firebaseio.com/"
     };
 
     firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
+    const db = firebase.database();
 
     function login() {
-      const wallet = document.getElementById("wallet").value.trim();
+      const walletAddress = document.getElementById("wallet").value.trim();
 
-      if (!wallet) {
-        alert("Пожалуйста, введите адрес кошелька.");
+      if (!walletAddress) {
+        alert("Введите адрес кошелька");
         return;
       }
 
-      const userRef = database.ref("users/" + wallet);
+      const userRef = db.ref("users/" + walletAddress);
 
       userRef.once("value").then(snapshot => {
         if (!snapshot.exists()) {
-          // создаем нового пользователя
           userRef.set({
-            wallet: wallet,
+            wallet: walletAddress,
             balance: 0,
-            totalMinedTime: 0
+            totalMiningTime: 0,
+            createdAt: Date.now()
           });
         }
 
-        localStorage.setItem("wallet", wallet);
+        // Сохраняем кошелёк в localStorage
+        localStorage.setItem("solanaWallet", walletAddress);
+
+        // Переход на дашборд
         window.location.href = "dashboard.html";
-      }).catch(error => {
-        console.error("Ошибка при логине:", error);
-        alert("Произошла ошибка. Попробуйте позже.");
       });
     }
   </script>
-
 </body>
 </html>
