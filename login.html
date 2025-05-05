@@ -1,96 +1,114 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <title>Вход в Miyamoto Cloud Miner</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <meta charset="UTF-8">
+  <title>Вход — Miyamoto</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #0d0d1a;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      flex-direction: column;
-      text-align: center;
+      background-image: url('background.png');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
     }
 
-    input {
-      padding: 10px;
-      width: 300px;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-      margin-bottom: 10px;
+    .suggestions {
+      position: absolute;
+      background: white;
+      color: black;
+      border-radius: 0.5rem;
+      max-height: 150px;
+      overflow-y: auto;
+      z-index: 1000;
     }
 
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      background-color: #6b5b95;
-      border: none;
-      color: white;
-      border-radius: 5px;
+    .suggestions div {
+      padding: 8px 12px;
       cursor: pointer;
     }
 
-    h1 {
-      margin-bottom: 30px;
+    .suggestions div:hover {
+      background-color: #e2e8f0;
     }
   </style>
 </head>
-<body>
-  <h1>Вход в Miyamoto Miner</h1>
-  <input type="text" id="wallet" placeholder="Введи адрес Solana кошелька" />
-  <br />
-  <button onclick="login()">Войти</button>
+<body class="min-h-screen flex items-center justify-center text-white font-sans relative">
+
+  <!-- затемняющий оверлей -->
+  <div class="absolute inset-0 bg-black opacity-70 z-0"></div>
+
+  <!-- Контент формы -->
+  <div class="bg-gray-900 bg-opacity-90 rounded-2xl p-8 max-w-md w-full shadow-lg z-10 relative">
+    <h2 class="text-3xl font-bold text-purple-400 text-center mb-6">Вход в майнинг</h2>
+    <p class="text-center text-gray-300 mb-4">Введите Solana-кошелёк, чтобы начать зарабатывать $MIYAMOTO</p>
+
+    <form id="loginForm" class="space-y-4">
+      <div class="relative">
+        <label for="wallet" class="block text-sm font-medium mb-1 text-gray-300">Адрес Solana кошелька</label>
+        <input type="text" id="wallet" name="wallet" required
+               class="w-full px-4 py-2 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+               placeholder="Например: 5K9m7s..."/>
+        <div id="suggestions" class="suggestions hidden"></div>
+      </div>
+      <button type="submit"
+              class="w-full py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-lg font-semibold transition">
+        Войти
+      </button>
+    </form>
+  </div>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBWWqOaYvDtjtMynOwZ3hRy5vt2nmzMgFM",
-      authDomain: "miyamoto-project.firebaseapp.com",
-      projectId: "miyamoto-project",
-      storageBucket: "miyamoto-project.appspot.com",
-      messagingSenderId: "266668256982",
-      appId: "1:266668256982:web:64957d8c366d80b1196377",
-      databaseURL: "https://miyamoto-project-default-rtdb.firebaseio.com/"
-    };
+    const walletInput = document.getElementById("wallet");
+    const suggestionsBox = document.getElementById("suggestions");
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    const savedWallets = JSON.parse(localStorage.getItem("wallets") || "[]");
 
-    function login() {
-      const walletAddress = document.getElementById("wallet").value.trim();
+    walletInput.addEventListener("focus", () => {
+      showSuggestions();
+    });
 
-      if (!walletAddress) {
-        alert("Введите адрес кошелька");
-        return;
+    walletInput.addEventListener("input", () => {
+      showSuggestions();
+    });
+
+    function showSuggestions() {
+      const value = walletInput.value.toLowerCase();
+      const filtered = savedWallets.filter(addr => addr.toLowerCase().includes(value)).slice(0, 5);
+      suggestionsBox.innerHTML = '';
+      if (filtered.length > 0) {
+        suggestionsBox.classList.remove("hidden");
+        filtered.forEach(addr => {
+          const div = document.createElement("div");
+          div.textContent = addr;
+          div.onclick = () => {
+            walletInput.value = addr;
+            suggestionsBox.classList.add("hidden");
+          };
+          suggestionsBox.appendChild(div);
+        });
+      } else {
+        suggestionsBox.classList.add("hidden");
       }
-
-      const userRef = db.ref("users/" + walletAddress);
-
-      userRef.once("value").then(snapshot => {
-        if (!snapshot.exists()) {
-          userRef.set({
-            wallet: walletAddress,
-            balance: 0,
-            totalMiningTime: 0,
-            createdAt: Date.now()
-          });
-        }
-
-        // Сохраняем кошелёк в localStorage
-        localStorage.setItem("solanaWallet", walletAddress);
-
-        // Переход на дашборд
-        window.location.href = "dashboard.html";
-      });
     }
+
+    document.addEventListener("click", (e) => {
+      if (!walletInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+        suggestionsBox.classList.add("hidden");
+      }
+    });
+
+    document.getElementById("loginForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const wallet = walletInput.value.trim();
+      if (!savedWallets.includes(wallet)) {
+        savedWallets.push(wallet);
+        localStorage.setItem("wallets", JSON.stringify(savedWallets));
+      }
+      localStorage.setItem("wallet", wallet);
+      window.location.href = "dashboard.html";
+    });
   </script>
+
 </body>
 </html>

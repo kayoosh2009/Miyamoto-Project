@@ -9,11 +9,11 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
   <style>
     body {
-      background: url('miner.jpg') no-repeat center center fixed;
+      background: url('background.png') no-repeat center center fixed;
       background-size: cover;
     }
     .bg-overlay {
-      background-color: rgba(0, 0, 0, 0.8);
+      background-color: rgba(15, 15, 30, 0.92); /* затемнение для читаемости */
     }
   </style>
 </head>
@@ -21,10 +21,8 @@
 
   <div class="min-h-screen flex flex-col justify-between bg-overlay">
 
-    <!-- Верхняя часть: контент -->
+    <!-- Верхняя часть -->
     <div class="flex flex-col md:flex-row items-center justify-center px-6 py-12 gap-10 flex-grow">
-
-      <!-- Левая часть: текст -->
       <div class="text-center md:text-left max-w-xl">
         <h1 class="text-4xl md:text-5xl font-bold mb-4 text-purple-400">Miyamoto Token</h1>
         <p class="text-lg md:text-xl text-gray-300 mb-6">
@@ -36,50 +34,47 @@
         </a>
       </div>
 
-      <!-- Правая часть: изображение -->
       <div class="max-w-sm w-full">
         <img src="miner.jpg" alt="Майнер на фоне сакуры" class="rounded-xl shadow-lg w-full object-cover">
       </div>
-
     </div>
 
-    <!-- Нижняя часть: статистика и баннер -->
-    <div class="bg-gray-800 bg-opacity-70 py-6 px-4">
+    <!-- Статистика -->
+    <div class="py-8 px-4">
       <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 text-center">
-        <div class="bg-gray-700 p-6 rounded-xl shadow">
+        <div class="bg-gray-800 bg-opacity-80 p-6 rounded-xl shadow">
           <h2 class="text-xl font-semibold text-purple-400">Всего намайнено</h2>
           <p id="totalTokens" class="text-3xl font-bold mt-2">0</p>
         </div>
-        <div class="bg-gray-700 p-6 rounded-xl shadow">
+        <div class="bg-gray-800 bg-opacity-80 p-6 rounded-xl shadow">
           <h2 class="text-xl font-semibold text-purple-400">Зарегистрировано кошельков</h2>
           <p id="userCount" class="text-3xl font-bold mt-2">0</p>
         </div>
       </div>
+    </div>
 
-      <!-- Рекламный баннер -->
-      <div class="flex justify-center mt-8">
-        <iframe data-aa='2392950' src='//ad.a-ads.com/2392950?size=728x90'
-          style='width:728px; height:90px; border:0px; padding:0; overflow:hidden; background-color: transparent;'></iframe>
-      </div>
-
-      <!-- Discord секция -->
-      <div class="mt-10 max-w-4xl mx-auto bg-gray-700 rounded-xl p-6 flex flex-col md:flex-row items-center gap-6">
-        <img src="avatar.jpg" alt="Аватар Дискорда" class="w-32 h-32 rounded-full shadow-md">
-        <div class="text-center md:text-left flex-grow">
-          <h2 class="text-2xl font-bold text-purple-400">Комнатка Кая</h2>
-          <p class="text-gray-300 mt-2">Наш уютный Discord-сервер в японском стиле. Обсуждаем крипту, делимся мемами и просто отдыхаем.</p>
-          <button onclick="window.open('https://discord.gg/K76vqDHn2v', '_blank')" class="mt-4 px-5 py-2 bg-purple-600 hover:bg-purple-700 rounded-full font-semibold">
-            💬 Присоединиться к серверу
-          </button>
-        </div>
+    <!-- Discord -->
+    <div class="mt-6 max-w-4xl mx-auto bg-gray-800 bg-opacity-80 rounded-xl p-6 flex flex-col md:flex-row items-center gap-6">
+      <img src="avatar.jpg" alt="Аватар Дискорда" class="w-32 h-32 rounded-full shadow-md">
+      <div class="text-center md:text-left flex-grow">
+        <h2 class="text-2xl font-bold text-purple-400">Комнатка Кая</h2>
+        <p class="text-gray-300 mt-2">Наш уютный Discord-сервер в японском стиле. Обсуждаем крипту, делимся мемами и просто отдыхаем.</p>
+        <button onclick="window.open('https://discord.gg/K76vqDHn2v', '_blank')" class="mt-4 px-5 py-2 bg-purple-600 hover:bg-purple-700 rounded-full font-semibold">
+          💬 Присоединиться к серверу
+        </button>
       </div>
     </div>
 
+    <!-- Рекламный баннер -->
+    <div class="flex justify-center mt-8">
+      <iframe data-aa='2392950' src='//ad.a-ads.com/2392950?size=728x90'
+        style='width:728px; height:90px; border:0px; padding:0; overflow:hidden; background-color: transparent;'></iframe>
+    </div>
+
     <!-- Подвал -->
-    <footer class="bg-black bg-opacity-70 text-gray-400 text-center py-4 text-sm">
+    <footer class="bg-black bg-opacity-70 text-gray-400 text-center py-4 text-sm mt-8">
       © 2025 Miyamoto Project — Made with ❤ and ☕
     </footer>
-
   </div>
 
   <script>
