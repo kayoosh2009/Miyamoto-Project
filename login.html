@@ -1,114 +1,86 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Вход — Miyamoto</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
       background-image: url('background.png');
       background-size: cover;
       background-position: center;
-      background-attachment: fixed;
+      background-repeat: no-repeat;
     }
-
-    .suggestions {
-      position: absolute;
-      background: white;
-      color: black;
-      border-radius: 0.5rem;
-      max-height: 150px;
-      overflow-y: auto;
-      z-index: 1000;
-    }
-
-    .suggestions div {
-      padding: 8px 12px;
-      cursor: pointer;
-    }
-
-    .suggestions div:hover {
-      background-color: #e2e8f0;
+    .overlay {
+      background-color: rgba(0, 0, 0, 0.6);
     }
   </style>
 </head>
-<body class="min-h-screen flex items-center justify-center text-white font-sans relative">
+<body class="text-white font-sans">
 
-  <!-- затемняющий оверлей -->
-  <div class="absolute inset-0 bg-black opacity-70 z-0"></div>
-
-  <!-- Контент формы -->
-  <div class="bg-gray-900 bg-opacity-90 rounded-2xl p-8 max-w-md w-full shadow-lg z-10 relative">
-    <h2 class="text-3xl font-bold text-purple-400 text-center mb-6">Вход в майнинг</h2>
-    <p class="text-center text-gray-300 mb-4">Введите Solana-кошелёк, чтобы начать зарабатывать $MIYAMOTO</p>
-
-    <form id="loginForm" class="space-y-4">
-      <div class="relative">
-        <label for="wallet" class="block text-sm font-medium mb-1 text-gray-300">Адрес Solana кошелька</label>
-        <input type="text" id="wallet" name="wallet" required
-               class="w-full px-4 py-2 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-               placeholder="Например: 5K9m7s..."/>
-        <div id="suggestions" class="suggestions hidden"></div>
+  <div class="min-h-screen flex items-center justify-center overlay">
+    <div class="bg-gray-900 bg-opacity-80 p-10 rounded-2xl shadow-2xl max-w-md w-full">
+      <div class="flex flex-col items-center mb-6">
+        <img src="avatar.jpg" alt="Аватар" class="w-24 h-24 rounded-full shadow-lg mb-4 border-4 border-purple-500">
+        <h1 class="text-3xl font-bold text-purple-400">Добро пожаловать</h1>
+        <p class="text-sm text-gray-400 mt-1">Введи свой Solana кошелёк, чтобы начать</p>
       </div>
-      <button type="submit"
-              class="w-full py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-lg font-semibold transition">
-        Войти
-      </button>
-    </form>
+
+      <form id="loginForm" class="space-y-4">
+        <input type="text" id="walletInput" placeholder="Твой Solana адрес"
+               class="w-full p-3 rounded-lg bg-gray-800 text-white placeholder-gray-400 shadow-inner"
+               required autocomplete="on" />
+
+        <button type="submit"
+          class="w-full bg-purple-600 hover:bg-purple-700 transition py-2 rounded-lg font-semibold shadow-md">
+          🚀 Войти и начать майнить
+        </button>
+      </form>
+    </div>
   </div>
 
-  <script>
-    const walletInput = document.getElementById("wallet");
-    const suggestionsBox = document.getElementById("suggestions");
+  <!-- Firebase SDK и логика -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-    const savedWallets = JSON.parse(localStorage.getItem("wallets") || "[]");
+    const firebaseConfig = {
+      apiKey: "AIzaSyBWWqOaYvDtjtMynOwZ3hRy5vt2nmzMgFM",
+      authDomain: "miyamoto-project.firebaseapp.com",
+      projectId: "miyamoto-project",
+      storageBucket: "miyamoto-project.appspot.com",
+      messagingSenderId: "266668256982",
+      appId: "1:266668256982:web:64957d8c366d80b1196377",
+      measurementId: "G-VSQJLR6GR9",
+      databaseURL: "https://miyamoto-project-default-rtdb.firebaseio.com/"
+    };
 
-    walletInput.addEventListener("focus", () => {
-      showSuggestions();
-    });
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-    walletInput.addEventListener("input", () => {
-      showSuggestions();
-    });
+    const loginForm = document.getElementById("loginForm");
 
-    function showSuggestions() {
-      const value = walletInput.value.toLowerCase();
-      const filtered = savedWallets.filter(addr => addr.toLowerCase().includes(value)).slice(0, 5);
-      suggestionsBox.innerHTML = '';
-      if (filtered.length > 0) {
-        suggestionsBox.classList.remove("hidden");
-        filtered.forEach(addr => {
-          const div = document.createElement("div");
-          div.textContent = addr;
-          div.onclick = () => {
-            walletInput.value = addr;
-            suggestionsBox.classList.add("hidden");
-          };
-          suggestionsBox.appendChild(div);
-        });
-      } else {
-        suggestionsBox.classList.add("hidden");
-      }
-    }
-
-    document.addEventListener("click", (e) => {
-      if (!walletInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
-        suggestionsBox.classList.add("hidden");
-      }
-    });
-
-    document.getElementById("loginForm").addEventListener("submit", function (e) {
+    loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const wallet = walletInput.value.trim();
-      if (!savedWallets.includes(wallet)) {
-        savedWallets.push(wallet);
-        localStorage.setItem("wallets", JSON.stringify(savedWallets));
+
+      const wallet = document.getElementById("walletInput").value.trim();
+      if (!wallet) return alert("Введите адрес кошелька");
+
+      localStorage.setItem("walletAddress", wallet);
+
+      const userRef = ref(db, `users/${wallet}`);
+      const snapshot = await get(userRef);
+
+      if (!snapshot.exists()) {
+        await set(userRef, {
+          balance: 0,
+          miningTime: 0
+        });
       }
-      localStorage.setItem("wallet", wallet);
+
       window.location.href = "dashboard.html";
     });
   </script>
-
 </body>
 </html>

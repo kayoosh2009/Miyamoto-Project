@@ -1,66 +1,159 @@
-<!-- dashboard.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Личный кабинет — Miyamoto</title>
+  <title>Панель — Miyamoto</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background-image: url('background.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    .overlay {
+      background-color: rgba(0, 0, 0, 0.7);
+    }
+  </style>
 </head>
-<body class="bg-black text-white flex flex-col items-center min-h-screen p-6">
+<body class="text-white font-sans">
+  <div class="overlay min-h-screen flex flex-col items-center justify-center p-6">
 
-  <div class="max-w-2xl w-full bg-gray-900 p-6 rounded-xl shadow-xl mt-10 text-center">
-    <h1 class="text-3xl font-bold mb-4">👤 Личный кабинет</h1>
-    <p id="wallet" class="text-purple-400 mb-2">Solana: ...</p>
-    <p id="balance" class="text-xl mb-2">💰 Баланс: 0 $MIYAMOTO</p>
-    <p id="miningTime" class="text-gray-400">⏱️ Общее время майнинга: 0 мин.</p>
+    <div class="bg-gray-900 bg-opacity-80 p-8 rounded-2xl shadow-2xl max-w-3xl w-full">
+      <h1 class="text-3xl md:text-4xl font-bold text-purple-400 mb-6 text-center">Личный кабинет</h1>
 
-    <a href="mining.html" class="inline-block mt-6 bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-lg font-semibold transition">
-      🔧 Перейти к майнингу
-    </a>
+      <div id="stats" class="grid md:grid-cols-2 gap-6 mb-6">
+        <div class="bg-gray-800 p-6 rounded-xl shadow text-center">
+          <h2 class="text-xl font-semibold text-purple-300">Баланс</h2>
+          <p id="balance" class="text-3xl font-bold mt-2">0 $MIYAMOTO</p>
+        </div>
+        <div class="bg-gray-800 p-6 rounded-xl shadow text-center">
+          <h2 class="text-xl font-semibold text-purple-300">Общее время майнинга</h2>
+          <p id="miningTime" class="text-2xl font-bold mt-2">0 минут</p>
+        </div>
+      </div>
+
+      <!-- График -->
+      <div class="bg-gray-800 p-6 rounded-xl shadow mb-6">
+        <h2 class="text-xl font-semibold text-purple-300 text-center mb-4">Прогресс майнинга</h2>
+        <canvas id="miningChart" height="150"></canvas>
+      </div>
+
+      <!-- Кнопки -->
+      <div class="flex justify-between">
+        <a href="mining.html"
+           class="bg-purple-600 hover:bg-purple-700 transition px-6 py-2 rounded-lg font-semibold shadow">
+          ⛏️ Перейти к майнингу
+        </a>
+        <button id="logoutBtn"
+           class="bg-red-600 hover:bg-red-700 transition px-6 py-2 rounded-lg font-semibold shadow">
+          Выйти
+        </button>
+      </div>
+    </div>
   </div>
 
-  <footer class="mt-12 text-sm text-gray-500">
-    Miyamoto Project © 2025
-  </footer>
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-  <script>
-    // Firebase конфиг
     const firebaseConfig = {
       apiKey: "AIzaSyBWWqOaYvDtjtMynOwZ3hRy5vt2nmzMgFM",
       authDomain: "miyamoto-project.firebaseapp.com",
       projectId: "miyamoto-project",
-      storageBucket: "miyamoto-project.firebasestorage.app",
+      storageBucket: "miyamoto-project.appspot.com",
       messagingSenderId: "266668256982",
       appId: "1:266668256982:web:64957d8c366d80b1196377",
-      measurementId: "G-VSQJLR6GR9"
+      measurementId: "G-VSQJLR6GR9",
+      databaseURL: "https://miyamoto-project-default-rtdb.firebaseio.com/"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-    const wallet = localStorage.getItem("wallet");
-
+    const wallet = localStorage.getItem("walletAddress");
     if (!wallet) {
-      alert("Адрес кошелька не найден. Пожалуйста, войдите снова.");
       window.location.href = "login.html";
-    } else {
-      document.getElementById("wallet").textContent = "Solana: " + wallet;
-
-      const userRef = db.ref("users/" + wallet);
-
-      userRef.on("value", (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          document.getElementById("balance").textContent = `💰 Баланс: ${data.balance || 0} $MIYAMOTO`;
-          const minutes = Math.floor((data.totalMiningTime || 0) / 60);
-          document.getElementById("miningTime").textContent = `⏱️ Общее время майнинга: ${minutes} мин.`;
-        }
-      });
     }
+
+    const balanceElem = document.getElementById("balance");
+    const timeElem = document.getElementById("miningTime");
+
+    async function fetchData() {
+      const userRef = ref(db, `users/${wallet}`);
+      const snapshot = await get(userRef);
+
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        balanceElem.textContent = `${data.balance} $MIYAMOTO`;
+        timeElem.textContent = `${data.miningTime} минут`;
+
+        updateChart(data.miningHistory || []);
+      } else {
+        balanceElem.textContent = "0 $MIYAMOTO";
+        timeElem.textContent = "0 минут";
+        updateChart([]);
+      }
+    }
+
+    // Chart
+    const ctx = document.getElementById('miningChart').getContext('2d');
+    let miningChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Баланс ($MIYAMOTO)',
+          data: [],
+          backgroundColor: 'rgba(168, 85, 247, 0.2)',
+          borderColor: '#a855f7',
+          borderWidth: 2,
+          pointRadius: 4,
+          pointBackgroundColor: '#a855f7'
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { color: '#fff' }
+          },
+          x: {
+            ticks: { color: '#fff' }
+          }
+        },
+        plugins: {
+          legend: {
+            labels: { color: '#fff' }
+          }
+        }
+      }
+    });
+
+    function updateChart(history) {
+      const labels = history.map((item, i) => `Майнинг ${i + 1}`);
+      const values = history.map(item => item.balance);
+
+      miningChart.data.labels = labels;
+      miningChart.data.datasets[0].data = values;
+      miningChart.update();
+
+      // Сохраняем в localStorage
+      localStorage.setItem("miningHistory", JSON.stringify(history));
+    }
+
+    // Logout
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      // Только очищаем адрес кошелька, но не трогаем график и статистику
+      localStorage.removeItem("walletAddress");
+      window.location.href = "login.html";
+    });
+
+    fetchData();
   </script>
 </body>
 </html>
