@@ -20,7 +20,6 @@
 </head>
 <body class="text-white font-sans">
   <div class="overlay min-h-screen flex flex-col items-center justify-center p-6">
-
     <div class="bg-gray-900 bg-opacity-80 p-8 rounded-2xl shadow-2xl max-w-3xl w-full">
       <h1 class="text-3xl md:text-4xl font-bold text-purple-400 mb-6 text-center">Личный кабинет</h1>
 
@@ -31,13 +30,13 @@
         </div>
         <div class="bg-gray-800 p-6 rounded-xl shadow text-center">
           <h2 class="text-xl font-semibold text-purple-300">Общее время майнинга</h2>
-          <p id="miningTime" class="text-2xl font-bold mt-2">0 минут</p>
+          <p id="miningTime" class="text-2xl font-bold mt-2">0 мин. 0 сек.</p>
         </div>
       </div>
 
       <!-- График -->
       <div class="bg-gray-800 p-6 rounded-xl shadow mb-6">
-        <h2 class="text-xl font-semibold text-purple-300 text-center mb-4">Прогресс майнинга</h2>
+        <h2 class="text-xl font-semibold text-purple-300 text-center mb-4">Доход за последние 7 дней</h2>
         <canvas id="miningChart" height="150"></canvas>
       </div>
 
@@ -88,31 +87,33 @@
 
       if (snapshot.exists()) {
         const data = snapshot.val();
-        balanceElem.textContent = `${data.balance} $MIYAMOTO`;
-        timeElem.textContent = `${data.miningTime} минут`;
+        balanceElem.textContent = `${data.balance ?? 0} $MIYAMOTO`;
+
+        const totalSecs = data.miningTime || 0;
+        const mins = Math.floor(totalSecs / 60);
+        const secs = totalSecs % 60;
+        timeElem.textContent = `${mins} мин. ${secs} сек.`;
 
         updateChart(data.miningHistory || []);
       } else {
         balanceElem.textContent = "0 $MIYAMOTO";
-        timeElem.textContent = "0 минут";
+        timeElem.textContent = "0 мин. 0 сек.";
         updateChart([]);
       }
     }
 
-    // Chart
+    // График
     const ctx = document.getElementById('miningChart').getContext('2d');
     let miningChart = new Chart(ctx, {
-      type: 'line',
+      type: 'bar',
       data: {
         labels: [],
         datasets: [{
-          label: 'Баланс ($MIYAMOTO)',
+          label: 'Заработано за день ($MIYAMOTO)',
           data: [],
-          backgroundColor: 'rgba(168, 85, 247, 0.2)',
+          backgroundColor: 'rgba(168, 85, 247, 0.6)',
           borderColor: '#a855f7',
-          borderWidth: 2,
-          pointRadius: 4,
-          pointBackgroundColor: '#a855f7'
+          borderWidth: 2
         }]
       },
       options: {
@@ -134,21 +135,33 @@
       }
     });
 
-    function updateChart(history) {
-      const labels = history.map((item, i) => `Майнинг ${i + 1}`);
-      const values = history.map(item => item.balance);
+    function formatDate(unixTimestamp) {
+      const date = new Date(unixTimestamp);
+      return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+    }
 
-      miningChart.data.labels = labels;
-      miningChart.data.datasets[0].data = values;
+    function calculateDailyEarnings(history) {
+      const dailyTotals = {};
+      history.forEach(entry => {
+        const day = formatDate(entry.timestamp);
+        if (!dailyTotals[day]) dailyTotals[day] = 0;
+        dailyTotals[day] += entry.earned ?? 0;
+      });
+      return dailyTotals;
+    }
+
+    function updateChart(history) {
+      const dailyTotals = calculateDailyEarnings(history);
+      const sortedDays = Object.keys(dailyTotals).slice(-7);
+
+      miningChart.data.labels = sortedDays;
+      miningChart.data.datasets[0].data = sortedDays.map(day => dailyTotals[day]);
       miningChart.update();
 
-      // Сохраняем в localStorage
       localStorage.setItem("miningHistory", JSON.stringify(history));
     }
 
-    // Logout
     document.getElementById("logoutBtn").addEventListener("click", () => {
-      // Только очищаем адрес кошелька, но не трогаем график и статистику
       localStorage.removeItem("walletAddress");
       window.location.href = "login.html";
     });

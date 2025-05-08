@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Miyamoto Майнинг</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: url('background.png') no-repeat center center fixed;
+      background-size: cover;
+    }
+    .glass {
+      backdrop-filter: blur(12px);
+      background-color: rgba(18, 18, 30, 0.7);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center text-white font-sans">
+
+  <div class="glass p-8 rounded-2xl shadow-xl max-w-lg w-full text-center space-y-6 border border-purple-500">
+    <h1 class="text-3xl font-bold text-purple-400">⚙️ Обычный майнинг</h1>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div class="bg-gray-800/70 p-4 rounded-lg border border-purple-600">
+        <p class="text-sm text-purple-300">Заработано</p>
+        <p id="earned" class="text-2xl font-bold text-green-400">0</p>
+      </div>
+      <div class="bg-gray-800/70 p-4 rounded-lg border border-purple-600">
+        <p class="text-sm text-purple-300">Время</p>
+        <p id="time" class="text-2xl font-bold">0 сек.</p>
+      </div>
+    </div>
+
+    <div class="text-center bg-gray-800/70 p-4 rounded-lg border border-purple-600">
+      <p class="text-purple-300 text-sm mb-1">Следующее начисление:</p>
+      <p id="countdown" class="text-3xl font-bold text-purple-500">15</p>
+    </div>
+
+    <audio id="ding" src="dzing.mp4" preload="auto"></audio>
+
+    <a href="dashboard.html" class="inline-block mt-4 bg-purple-600 hover:bg-purple-700 transition px-5 py-2 rounded-lg font-semibold shadow">
+      ← Назад в кабинет
+    </a>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBWWqOaYvDtjtMynOwZ3hRy5vt2nmzMgFM",
+      authDomain: "miyamoto-project.firebaseapp.com",
+      projectId: "miyamoto-project",
+      storageBucket: "miyamoto-project.appspot.com",
+      messagingSenderId: "266668256982",
+      appId: "1:266668256982:web:64957d8c366d80b1196377",
+      measurementId: "G-VSQJLR6GR9",
+      databaseURL: "https://miyamoto-project-default-rtdb.firebaseio.com/"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const wallet = localStorage.getItem("walletAddress");
+    if (!wallet) window.location.href = "login.html";
+
+    const earnedEl = document.getElementById("earned");
+    const timeEl = document.getElementById("time");
+    const countdownEl = document.getElementById("countdown");
+    const ding = document.getElementById("ding");
+
+    let balance = 0;
+    let miningTime = 0;
+
+    async function fetchUserData() {
+      const userRef = ref(db, `users/${wallet}`);
+      const snapshot = await get(userRef);
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        balance = data.balance || 0;
+        miningTime = data.miningTime || 0;
+        earnedEl.textContent = balance.toFixed(2);
+        timeEl.textContent = miningTime + ' сек.';
+      }
+    }
+
+    function getRandomEarning() {
+      return parseFloat((Math.random() * (1.2 - 0.1) + 0.1).toFixed(2));
+    }
+
+    async function doMining() {
+      const earned = getRandomEarning();
+      balance += earned;
+      miningTime += 15;
+
+      const userRef = ref(db, `users/${wallet}`);
+      const snapshot = await get(userRef);
+      const data = snapshot.exists() ? snapshot.val() : {};
+      const updatedHistory = data.miningHistory || [];
+      updatedHistory.push({ earned, timestamp: Date.now() });
+
+      await update(userRef, {
+        balance: parseFloat(balance.toFixed(2)),
+        miningTime,
+        miningHistory: updatedHistory
+      });
+
+      earnedEl.textContent = balance.toFixed(2);
+      timeEl.textContent = miningTime + ' сек.';
+      ding.play();
+    }
+
+    async function countdownAndMine() {
+      let seconds = 15;
+      countdownEl.textContent = seconds;
+      const interval = setInterval(() => {
+        seconds--;
+        countdownEl.textContent = seconds;
+        if (seconds <= 0) {
+          clearInterval(interval);
+          doMining().then(() => countdownAndMine());
+        }
+      }, 1000);
+    }
+
+    await fetchUserData();
+    countdownAndMine();
+  </script>
+</body>
+</html>

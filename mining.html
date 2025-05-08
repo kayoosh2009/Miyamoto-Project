@@ -1,83 +1,57 @@
-<!-- mining.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Майнинг — Miyamoto</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Выбор режима майнинга</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: url('background.png') no-repeat center center fixed;
+      background-size: cover;
+    }
+  </style>
 </head>
-<body class="bg-black text-white flex flex-col items-center min-h-screen p-6">
+<body class="text-white font-sans bg-black/60 backdrop-blur-md">
 
-  <div class="max-w-2xl w-full bg-gray-900 p-6 rounded-xl shadow-xl mt-10 text-center">
-    <h1 class="text-3xl font-bold mb-6">⛏️ Облачный майнинг $MIYAMOTO</h1>
+  <div class="min-h-screen flex flex-col items-center justify-center px-4 py-10 space-y-10">
 
-    <div class="mb-4">
-      <label class="block mb-2">Выберите майнер:</label>
-      <select id="miner" class="w-full p-2 text-black rounded">
-        <option value="1">MinerCat 1000 (Бесплатный, 1 токен/мин)</option>
-        <option value="2">TigerBit (2 токена/мин)</option>
-        <option value="3">SakuraCore (3 токена/мин)</option>
-        <option value="4">NekoMiner (4 токена/мин)</option>
-        <option value="5">DragonX (5 токенов/мин)</option>
-      </select>
+    <h1 class="text-4xl md:text-5xl font-bold text-purple-400 drop-shadow-lg text-center">Выберите режим майнинга</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 max-w-6xl w-full">
+
+      <!-- Стандартный майнинг -->
+      <div class="bg-black/40 backdrop-blur-xl rounded-2xl p-6 shadow-lg hover:scale-105 transition">
+        <h2 class="text-2xl font-bold text-purple-300 mb-2">🚀 Стандартный майнинг</h2>
+        <p class="text-gray-300 mb-4">Каждые 15 секунд начисляется определенное количество токенов. Подходит для обычной фармы.</p>
+        <a href="basic.html" class="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg font-semibold inline-block">Начать</a>
+      </div>
+
+      <!-- Турбо-майнинг -->
+      <div class="bg-black/40 backdrop-blur-xl rounded-2xl p-6 shadow-lg hover:scale-105 transition">
+        <h2 class="text-2xl font-bold text-pink-300 mb-2">⚡ Турбо майнинг</h2>
+        <p class="text-gray-300 mb-4">Быстрее, но требует больше активности. Идеально для хардкорных фармеров.</p>
+        <button class="bg-pink-600 hover:bg-pink-700 px-4 py-2 rounded-lg font-semibold">Скоро</button>
+      </div>
+
+      <!-- Стелс-майнинг -->
+      <div class="bg-black/40 backdrop-blur-xl rounded-2xl p-6 shadow-lg hover:scale-105 transition">
+        <h2 class="text-2xl font-bold text-blue-300 mb-2">🕵️ Стелс майнинг</h2>
+        <p class="text-gray-300 mb-4">Майнинг в фоне без уведомлений. Для ниндзя криптовалюты.</p>
+        <button class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-semibold">Скоро</button>
+      </div>
+
     </div>
 
-    <div class="mb-4">
-      <label class="block mb-2">Выберите локацию:</label>
-      <select id="location" class="w-full p-2 text-black rounded">
-        <option value="tokyo">Токио</option>
-        <option value="nagoya">Нагоя</option>
-        <option value="kyoto">Киото</option>
-        <option value="osaka">Осака</option>
-      </select>
-    </div>
+    <!-- Вернуться назад -->
+    <a href="dashboard.html" class="mt-10 text-gray-300 hover:underline">← Вернуться в дашборд</a>
 
-    <button onclick="startMining()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded font-semibold mt-4">
-      ▶️ Начать майнинг
-    </button>
+    <!-- Подвал -->
+    <footer class="mt-16 text-sm text-gray-400 text-center">
+      <p>© 2025 Miyamoto Token. Made with ❤️ and ☕</p>
+    </footer>
 
-    <div id="status" class="mt-6 text-lg text-green-400"></div>
   </div>
 
-  <script>
-    const wallet = localStorage.getItem("wallet");
-    if (!wallet) {
-      alert("Пожалуйста, войдите снова.");
-      window.location.href = "login.html";
-    }
-
-    const minerSpeeds = {
-      1: 1,
-      2: 2,
-      3: 3,
-      4: 4,
-      5: 5
-    };
-
-    function startMining() {
-      const miner = document.getElementById("miner").value;
-      const location = document.getElementById("location").value;
-      const speed = minerSpeeds[miner];
-
-      const now = new Date();
-      const currentDate = now.toDateString();
-      const timeKey = `mining_${location}_${currentDate}`;
-      const usedTime = parseInt(localStorage.getItem(timeKey) || "0");
-
-      if (usedTime >= 30) {
-        document.getElementById("status").textContent = "⚠️ Сегодня лимит на эту локацию исчерпан (30 мин)";
-        return;
-      }
-
-      // Сохраняем данные для следующей страницы
-      localStorage.setItem("currentMiner", miner);
-      localStorage.setItem("currentSpeed", speed);
-      localStorage.setItem("currentLocation", location);
-
-      // Переход на симуляцию процесса
-      window.location.href = "mining-process.html";
-    }
-  </script>
 </body>
 </html>
